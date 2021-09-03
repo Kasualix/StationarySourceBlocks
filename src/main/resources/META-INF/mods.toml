@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="Public domain"
+
+[[mods]]
+modId="stationarysourceblocks"
+version="v1.0"
+displayName="Stationary Source Blocks"
+#updateJSONURL=""
+displayURL="https://www.curseforge.com/minecraft/mc-mods/stationarysourceblocks"
+#logoFile="logo.png"
+#credits=""
+authors="StephenBarnes"
+description='''
+Buckets can be filled and emptied, but cannot remove or place source blocks of water or lava.'''
+
+[[dependencies.stationarysourceblocks]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36.2.0,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.stationarysourceblocks]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"
