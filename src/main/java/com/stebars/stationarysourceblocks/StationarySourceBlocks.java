@@ -1,5 +1,7 @@
 package com.stebars.stationarysourceblocks;
 
+import java.lang.reflect.Field;
+
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.Block;
@@ -7,8 +9,13 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CampfireBlock;
 import net.minecraft.block.FarmlandBlock;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.passive.fish.AbstractFishEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.FishBucketItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -23,6 +30,7 @@ import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
@@ -56,7 +64,9 @@ public class StationarySourceBlocks {
         RayTraceResult target = getPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
 		RayTraceResult.Type targetType = target.getType();
 		
-		if (heldItem == Items.WATER_BUCKET)
+		if (heldItem instanceof FishBucketItem)
+			useFishBucket(event, world, player, target, targetType, (FishBucketItem) heldItem);
+		else if (heldItem == Items.WATER_BUCKET)
 			useWaterBucket(event, world, player, target, targetType);
 		else if (heldItem == Items.LAVA_BUCKET)
 			useLavaBucket(event, world, player, target, targetType);
@@ -99,6 +109,40 @@ public class StationarySourceBlocks {
 		// Return allow to signal that we've processed it
 		event.setResult(Result.ALLOW);
 	}
+	
+	private void useFishBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType,
+			FishBucketItem heldItem) {
+		if (!(world instanceof ServerWorld))
+			return;
+		if (!targetType.equals(RayTraceResult.Type.BLOCK))
+			return;
+		
+		Field fishBucketType;
+		EntityType<?> type;
+		try {
+			fishBucketType = FishBucketItem.class.getDeclaredField("type");
+			type = (EntityType<?>) fishBucketType.get(heldItem);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+		fishBucketType.setAccessible(true);
+		
+		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
+		BlockPos pos = blockResult.getBlockPos();	
+
+		Entity entity = type.spawn((ServerWorld) world, event.getEmptyBucket(), (PlayerEntity)null, pos, SpawnReason.BUCKET, true, false);
+		if (entity != null) {
+			((AbstractFishEntity)entity).setFromBucket(true);
+		}
+		world.playSound(player, pos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+		
+		// Finish with a bucket containing only water
+		event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));
+		
+		// Return allow to signal that we've processed it
+		event.setResult(Result.ALLOW);
+	}
 
 	private void useLavaBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {
 		if (!targetType.equals(RayTraceResult.Type.BLOCK))
@@ -136,6 +180,7 @@ public class StationarySourceBlocks {
 	
 	private void useEmptyBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {
 		if (!targetType.equals(RayTraceResult.Type.BLOCK)) {
+			// Can be RayTraceResult.Type.ENTITY, e.g. fish, so deny to cause default fish-catching behavior
 			event.setResult(Result.DENY);
 			return;
 		}
