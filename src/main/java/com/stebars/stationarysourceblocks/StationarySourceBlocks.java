@@ -75,6 +75,13 @@ public class StationarySourceBlocks {
 	}
 	
 	private void useWaterBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {		
+		boolean soundPlayed = false;
+		if (player.isOnFire()) {
+			player.clearFire();
+			world.playSound(player, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			soundPlayed = true;
+		}
+		
 		if (!targetType.equals(RayTraceResult.Type.BLOCK))
 			return;
 		
@@ -85,22 +92,27 @@ public class StationarySourceBlocks {
 
 		if (world.getFluidState(pos).is(FluidTags.WATER)) {
 			// poured water onto water -- just empty bucket
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed)
+				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else if (world.getFluidState(pos).is(FluidTags.LAVA)) {
 			// poured water onto lava -- create obsidian
-			world.playSound((PlayerEntity)null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed)
+				world.playSound((PlayerEntity)null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
 		} else if (block.equals(Blocks.FIRE)) {
 			// poured water onto fire -- extinguish the fire
-			world.playSound((PlayerEntity)null, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed)
+				world.playSound((PlayerEntity)null, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 		} else if (block.equals(Blocks.FARMLAND)) {
 			// poured water onto farmland -- set moisture level to max
 			world.setBlock(pos, state.setValue(FarmlandBlock.MOISTURE, 7), 2);
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed)
+				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else {
 			// tried to pour water on a block, neither lava nor farmland, so just emptying
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed)
+				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
 		
 		// Clear bucket
