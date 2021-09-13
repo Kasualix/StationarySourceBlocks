@@ -32,6 +32,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -104,13 +105,9 @@ public class StationarySourceBlocks {
 			if (!soundPlayed)
 				world.playSound((PlayerEntity)null, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-		} else if (block.equals(Blocks.FARMLAND)) {
-			// poured water onto farmland -- set moisture level to max
-			world.setBlock(pos, state.setValue(FarmlandBlock.MOISTURE, 7), 2);
-			if (!soundPlayed)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else {
-			// tried to pour water on a block, neither lava nor farmland, so just emptying
+			// tried to pour water on a block, not lava, so empty and possibly hydrate nearby farmland
+			hydrateFarmland(world, pos, state);
 			if (!soundPlayed)
 				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
@@ -120,6 +117,20 @@ public class StationarySourceBlocks {
 		
 		// Return allow to signal that we've processed it
 		event.setResult(Result.ALLOW);
+	}
+	
+	private void hydrateFarmland(World world, BlockPos pos, BlockState state) {
+		for(BlockPos targetPos : BlockPos.betweenClosed(
+				pos.offset(-1, 0, -1),
+				pos.offset(1, 0, 1))) {
+			BlockState targetState = world.getBlockState(targetPos);
+			Block targetBlock = targetState.getBlock();
+			if (targetBlock.equals(Blocks.FARMLAND)) {
+				world.setBlock(targetPos,
+						targetState.setValue(FarmlandBlock.MOISTURE, 7),
+						Constants.BlockFlags.DEFAULT_AND_RERENDER);
+			}
+		}
 	}
 	
 	private void useFishBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType,
