@@ -14,16 +14,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FishBucketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.eventbus.api.Event.Result;
 
 public class FishBucketDispenseBehavior extends OptionalDispenseBehavior {
    protected ItemStack execute(IBlockSource source, ItemStack bucket) {
