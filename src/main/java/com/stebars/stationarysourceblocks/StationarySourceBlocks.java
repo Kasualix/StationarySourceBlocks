@@ -71,7 +71,7 @@ public class StationarySourceBlocks {
     
     public void registerDispenserBehaviors() {
     	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
-    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new DefaultDispenseItemBehavior());
+    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new WaterBucketDispenseBehavior());
     	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new DefaultDispenseItemBehavior());
     	
     	for (String name: OptionsHolder.COMMON.dispenserFishBucketItems.get()) {
