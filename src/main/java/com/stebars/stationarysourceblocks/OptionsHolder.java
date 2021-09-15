@@ -9,11 +9,14 @@ public class OptionsHolder {
 	public static class Common {	
 
 	    public ConfigValue<Boolean> fixIce;
+	    public ConfigValue<Boolean> fixDispensers;
 
 		public Common(ForgeConfigSpec.Builder builder) {
 	        fixIce = builder.comment("If true, replace ice blocks with new ice blocks that don't turn into water in light or when mined.")
 	        		.define("fixIce", true);
-	        /* TODO: make dispensers also not affect source blocks */
+	        fixDispensers = builder.comment("If true, dispensers can't place or remove source blocks.")
+	        		.define("fixIce", true);
+	        /* TODO: make pistons not move source blocks */
 		}
 	}
 

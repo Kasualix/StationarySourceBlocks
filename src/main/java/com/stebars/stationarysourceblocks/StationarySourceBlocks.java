@@ -8,7 +8,9 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CampfireBlock;
+import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.FarmlandBlock;
+import net.minecraft.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
@@ -54,9 +56,16 @@ public class StationarySourceBlocks {
 	
     public StationarySourceBlocks() {
         MinecraftForge.EVENT_BUS.register(this);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC); 
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
+        
 	    if (OptionsHolder.COMMON.fixIce.get())
 	    	OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+	    
+	    if (OptionsHolder.COMMON.fixDispensers.get()) {
+	    	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
+	    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new DefaultDispenseItemBehavior());
+	    	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new DefaultDispenseItemBehavior());
+	    }
     }
 
 	@SubscribeEvent
