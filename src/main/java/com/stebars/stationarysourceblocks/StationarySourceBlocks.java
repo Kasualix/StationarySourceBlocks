@@ -36,13 +36,27 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 
 
-@Mod("stationarysourceblocks")
+@Mod(StationarySourceBlocks.MODID)
 public class StationarySourceBlocks {
+	final static String MODID = "stationarysourceblocks";
+	
+	private static final DeferredRegister<Block> OVERWRITE_BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "minecraft");
+	public static final RegistryObject<Block> ICE_NO_WATER_BLOCK = OVERWRITE_BLOCKS.register("ice", () -> new IceNoWaterBlock());
+	
     public StationarySourceBlocks() {
         MinecraftForge.EVENT_BUS.register(this);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC); 
+	    if (OptionsHolder.COMMON.fixIce.get())
+	    	OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
 	@SubscribeEvent
