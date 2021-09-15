@@ -2,6 +2,8 @@ package com.stebars.stationarysourceblocks;
 
 import java.lang.reflect.Field;
 
+import org.jline.utils.Log;
+
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.Block;
@@ -23,6 +25,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -54,7 +57,7 @@ public class StationarySourceBlocks {
 	private static final DeferredRegister<Block> OVERWRITE_BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "minecraft");
 	public static final RegistryObject<Block> ICE_NO_WATER_BLOCK = OVERWRITE_BLOCKS.register("ice", () -> new IceNoWaterBlock());
 	
-    public StationarySourceBlocks() {
+    public StationarySourceBlocks() throws Exception {
         MinecraftForge.EVENT_BUS.register(this);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
         
@@ -65,6 +68,17 @@ public class StationarySourceBlocks {
 	    	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
 	    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new DefaultDispenseItemBehavior());
 	    	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new DefaultDispenseItemBehavior());
+	    	// TODO special fish-dispensing behaviors? just throw the fish mob
+	    	for (String name: OptionsHolder.COMMON.dispenserOverrideItems.get()) {
+	    		Item item;
+	    		try {
+	    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+	    		} catch (Exception e) {
+	    			Log.error("Item not found, ignoring: " + name);
+	    			continue;
+	    		}
+	    		DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
+	    	}
 	    }
     }
 

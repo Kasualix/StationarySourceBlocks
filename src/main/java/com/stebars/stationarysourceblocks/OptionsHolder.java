@@ -1,6 +1,10 @@
 package com.stebars.stationarysourceblocks;
 
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.collect.Lists;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -10,12 +14,18 @@ public class OptionsHolder {
 
 	    public ConfigValue<Boolean> fixIce;
 	    public ConfigValue<Boolean> fixDispensers;
+	    public ConfigValue<List<? extends String>> dispenserOverrideItems;
 
 		public Common(ForgeConfigSpec.Builder builder) {
 	        fixIce = builder.comment("If true, replace ice blocks with new ice blocks that don't turn into water in light or when mined.")
 	        		.define("fixIce", true);
 	        fixDispensers = builder.comment("If true, dispensers can't place or remove source blocks.")
 	        		.define("fixIce", true);
+	        dispenserOverrideItems = builder.comment("List of items that can place/consume water, and should be overwritten to just throw the item instead. "
+	        		+ "Except don't add buckets, water buckets, or lava buckets, because this mod gives them their own behavior.")
+	        		.defineList("dispenserOverrideItems", Lists.newArrayList("minecraft:cod_bucket",
+	        				"minecraft:salmon_bucket", "minecraft:pufferfish_bucket", "minecraft:tropical_fish_bucket"),
+	        				e -> e instanceof String);
 	        /* TODO: make pistons not move source blocks */
 		}
 	}
