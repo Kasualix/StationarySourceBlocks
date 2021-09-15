@@ -13,7 +13,7 @@ public class OptionsHolder {
 		public Common(ForgeConfigSpec.Builder builder) {
 	        fixIce = builder.comment("If true, replace ice blocks with new ice blocks that don't turn into water in light or when mined.")
 	        		.define("fixIce", true);
-	        /* TODO: allowInCreative, make dispensers also not affect source blocks */
+	        /* TODO: make dispensers also not affect source blocks */
 		}
 	}
 

@@ -70,10 +70,13 @@ public class StationarySourceBlocks {
 		// event.getResult() is always "default", unless you change it to something else with .setResult().
 		// event's result is whether bucket is allowed to do what this function tries to do.
 		// So setting result to "deny" makes it do whatever it would by default. Setting to "allow" cancels default.
+
+		PlayerEntity player = event.getPlayer();
+		if (player.isCreative())
+			return;
 		
 		Item heldItem = event.getEmptyBucket().getItem();
 		World world = event.getWorld();
-		PlayerEntity player = event.getPlayer();
 
 		// redo raytrace, the one in event.getTarget() doesn't seem to detect ray colliding with fluid source blocks
         RayTraceResult target = getPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
