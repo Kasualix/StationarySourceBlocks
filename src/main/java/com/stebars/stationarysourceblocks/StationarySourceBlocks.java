@@ -65,21 +65,36 @@ public class StationarySourceBlocks {
 	    	OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
 	    
 	    if (OptionsHolder.COMMON.fixDispensers.get()) {
-	    	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
-	    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new DefaultDispenseItemBehavior());
-	    	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new DefaultDispenseItemBehavior());
-	    	// TODO special fish-dispensing behaviors? just throw the fish mob
-	    	for (String name: OptionsHolder.COMMON.dispenserOverrideItems.get()) {
-	    		Item item;
-	    		try {
-	    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
-	    		} catch (Exception e) {
-	    			Log.error("Item not found, ignoring: " + name);
-	    			continue;
-	    		}
-	    		DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
-	    	}
+	    	registerDispenserBehaviors();
 	    }
+    }
+    
+    public void registerDispenserBehaviors() {
+    	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
+    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new DefaultDispenseItemBehavior());
+    	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new DefaultDispenseItemBehavior());
+    	
+    	for (String name: OptionsHolder.COMMON.dispenserFishBucketItems.get()) {
+    		Item item;
+    		try {
+    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+    		} catch (Exception e) {
+    			Log.error("Item not found, ignoring: " + name);
+    			continue;
+    		}
+    		DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
+    	}
+    	
+    	for (String name: OptionsHolder.COMMON.dispenserDefaultItems.get()) {
+    		Item item;
+    		try {
+    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+    		} catch (Exception e) {
+    			Log.error("Item not found, ignoring: " + name);
+    			continue;
+    		}
+    		DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
+    	}
     }
 
 	@SubscribeEvent
