@@ -1,4 +1,4 @@
-package com.stebars.stationarysourceblocks;
+package com.stebars.stationarysourceblocks.dispenser;
 
 import java.lang.reflect.Field;
 
