@@ -2,6 +2,10 @@ package com.stebars.stationarysourceblocks;
 
 import java.lang.reflect.Field;
 
+import com.stebars.stationarysourceblocks.dispenser.EmptyBucketDispenseBehavior;
+import com.stebars.stationarysourceblocks.dispenser.FishBucketDispenseBehavior;
+import com.stebars.stationarysourceblocks.dispenser.LavaBucketDispenseBehavior;
+import com.stebars.stationarysourceblocks.dispenser.WaterBucketDispenseBehavior;
 import org.jline.utils.Log;
 
 import net.minecraft.advancements.CriteriaTriggers;
