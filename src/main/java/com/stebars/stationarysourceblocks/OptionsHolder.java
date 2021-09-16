@@ -21,7 +21,7 @@ public class OptionsHolder {
 	        fixIce = builder.comment("If true, replace ice blocks with new ice blocks that don't turn into water in light or when mined.")
 	        		.define("fixIce", true);
 	        fixDispensers = builder.comment("If true, dispensers can't place or remove source blocks.")
-	        		.define("fixIce", true);
+	        		.define("fixDispensers", true);
 	        dispenserFishBucketItems = builder.comment("List of fish buckets. Dispensers will toss out the fish and the water bucket separately.")
 	        		.defineList("dispenserFishBucketItems", Lists.newArrayList("minecraft:cod_bucket",
 	        				"minecraft:salmon_bucket", "minecraft:pufferfish_bucket", "minecraft:tropical_fish_bucket"),
