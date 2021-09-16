@@ -22,7 +22,7 @@ import net.minecraft.world.server.ServerWorld;
 // This code mostly from IceBlock class, modified so it doesn't melt in light or turn into water when broken
 
 public class IceNoWaterBlock extends IceBlock {
-	
+
 	public IceNoWaterBlock() {
 		super(Block.Properties.copy(Blocks.ICE));
 	}

@@ -16,29 +16,29 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class LavaBucketDispenseBehavior extends OptionalDispenseBehavior {
-   protected ItemStack execute(IBlockSource source, ItemStack bucket) {
-	   // takes in item stack, returns new item stack (placed back in dispenser), optionally spawns other items
-	   
-       Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
-       BlockPos dispenseBlockPos = source.getPos().relative(direction);
-       World world = source.getLevel();
-       IPosition dispensePosition = DispenserBlock.getDispensePosition(source);
+	protected ItemStack execute(IBlockSource source, ItemStack bucket) {
+		// takes in item stack, returns new item stack (placed back in dispenser), optionally spawns other items
 
-       // try to create cobblestone
-       if (world.getFluidState(dispenseBlockPos).is(FluidTags.WATER)) {
-    	   world.playSound((PlayerEntity)null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
-    	   world.setBlock(dispenseBlockPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
-    	   
-    	   bucket.shrink(1);
-    	   if (bucket.isEmpty())
-    		   return new ItemStack(Items.BUCKET);
-    	   spawnItem(world, new ItemStack(Items.BUCKET), 6, direction, dispensePosition);
-    	   return bucket;
-       }
+		Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
+		BlockPos dispenseBlockPos = source.getPos().relative(direction);
+		World world = source.getLevel();
+		IPosition dispensePosition = DispenserBlock.getDispensePosition(source);
 
-       // if we couldn't create cobblestone, just toss the bucket
-       ItemStack oneBucket = bucket.split(1);
-       spawnItem(world, oneBucket, 6, direction, dispensePosition);
-       return bucket;
-   }
+		// try to create cobblestone
+		if (world.getFluidState(dispenseBlockPos).is(FluidTags.WATER)) {
+			world.playSound((PlayerEntity)null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.setBlock(dispenseBlockPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
+
+			bucket.shrink(1);
+			if (bucket.isEmpty())
+				return new ItemStack(Items.BUCKET);
+			spawnItem(world, new ItemStack(Items.BUCKET), 6, direction, dispensePosition);
+			return bucket;
+		}
+
+		// if we couldn't create cobblestone, just toss the bucket
+		ItemStack oneBucket = bucket.split(1);
+		spawnItem(world, oneBucket, 6, direction, dispensePosition);
+		return bucket;
+	}
 }

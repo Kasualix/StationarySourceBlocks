@@ -22,14 +22,14 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
 public class FishBucketDispenseBehavior extends OptionalDispenseBehavior {
-   protected ItemStack execute(IBlockSource source, ItemStack bucket) {
-	   // takes in item stack, returns new item stack (placed back in dispenser), optionally spawns other items
+	protected ItemStack execute(IBlockSource source, ItemStack bucket) {
+		// takes in item stack, returns new item stack (placed back in dispenser), optionally spawns other items
 
-       Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
-       BlockPos targetPos = source.getPos().relative(direction);
-       World world = source.getLevel();
-       IPosition dispensePosition = DispenserBlock.getDispensePosition(source);
-		
+		Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
+		BlockPos targetPos = source.getPos().relative(direction);
+		World world = source.getLevel();
+		IPosition dispensePosition = DispenserBlock.getDispensePosition(source);
+
 		Field fishBucketType;
 		EntityType<?> type;
 		try {
@@ -40,17 +40,17 @@ public class FishBucketDispenseBehavior extends OptionalDispenseBehavior {
 			e.printStackTrace();
 			return bucket;
 		}
-		
+
 		// spawn fish
 		Entity entity = type.spawn((ServerWorld) world, bucket, (PlayerEntity)null, targetPos, SpawnReason.BUCKET, true, false);
 		if (entity != null) {
 			((AbstractFishEntity)entity).setFromBucket(true);
 		}
 		world.playSound((PlayerEntity) null, targetPos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-		
+
 		// throw out water bucket, return the rest of the buckets
 		bucket.shrink(1);
-	    spawnItem(world, new ItemStack(Items.WATER_BUCKET), 6, direction, dispensePosition);
+		spawnItem(world, new ItemStack(Items.WATER_BUCKET), 6, direction, dispensePosition);
 		return bucket;
-   }
+	}
 }

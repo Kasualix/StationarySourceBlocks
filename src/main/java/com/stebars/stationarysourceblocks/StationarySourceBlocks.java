@@ -57,49 +57,49 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Mod(StationarySourceBlocks.MODID)
 public class StationarySourceBlocks {
 	final static String MODID = "stationarysourceblocks";
-	
+
 	private static final DeferredRegister<Block> OVERWRITE_BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "minecraft");
 	public static final RegistryObject<Block> ICE_NO_WATER_BLOCK = OVERWRITE_BLOCKS.register("ice", () -> new IceNoWaterBlock());
-	
-    public StationarySourceBlocks() throws Exception {
-        MinecraftForge.EVENT_BUS.register(this);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
-        
-	    if (OptionsHolder.COMMON.fixIce.get())
-	    	OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
-	    
-	    if (OptionsHolder.COMMON.fixDispensers.get()) {
-	    	registerDispenserBehaviors();
-	    }
-    }
-    
-    public void registerDispenserBehaviors() {
-    	DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
-    	DispenserBlock.registerBehavior(Items.WATER_BUCKET, new WaterBucketDispenseBehavior());
-    	DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new LavaBucketDispenseBehavior());
-    	
-    	for (String name: OptionsHolder.COMMON.dispenserFishBucketItems.get()) {
-    		Item item;
-    		try {
-    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
-    		} catch (Exception e) {
-    			Log.error("Item not found, ignoring: " + name);
-    			continue;
-    		}
-    		DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
-    	}
-    	
-    	for (String name: OptionsHolder.COMMON.dispenserDefaultItems.get()) {
-    		Item item;
-    		try {
-    			item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
-    		} catch (Exception e) {
-    			Log.error("Item not found, ignoring: " + name);
-    			continue;
-    		}
-    		DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
-    	}
-    }
+
+	public StationarySourceBlocks() throws Exception {
+		MinecraftForge.EVENT_BUS.register(this);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
+
+		if (OptionsHolder.COMMON.fixIce.get())
+			OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+
+		if (OptionsHolder.COMMON.fixDispensers.get()) {
+			registerDispenserBehaviors();
+		}
+	}
+
+	public void registerDispenserBehaviors() {
+		DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
+		DispenserBlock.registerBehavior(Items.WATER_BUCKET, new WaterBucketDispenseBehavior());
+		DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new LavaBucketDispenseBehavior());
+
+		for (String name: OptionsHolder.COMMON.dispenserFishBucketItems.get()) {
+			Item item;
+			try {
+				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+			} catch (Exception e) {
+				Log.error("Item not found, ignoring: " + name);
+				continue;
+			}
+			DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
+		}
+
+		for (String name: OptionsHolder.COMMON.dispenserDefaultItems.get()) {
+			Item item;
+			try {
+				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+			} catch (Exception e) {
+				Log.error("Item not found, ignoring: " + name);
+				continue;
+			}
+			DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
+		}
+	}
 
 	@SubscribeEvent
 	public void bucketUsed(final FillBucketEvent event)
@@ -116,14 +116,14 @@ public class StationarySourceBlocks {
 		PlayerEntity player = event.getPlayer();
 		if (player.isCreative())
 			return;
-		
+
 		Item heldItem = event.getEmptyBucket().getItem();
 		World world = event.getWorld();
 
 		// redo raytrace, the one in event.getTarget() doesn't seem to detect ray colliding with fluid source blocks
-        RayTraceResult target = getPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
+		RayTraceResult target = getPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
 		RayTraceResult.Type targetType = target.getType();
-		
+
 		if (heldItem instanceof FishBucketItem)
 			useFishBucket(event, world, player, target, targetType, (FishBucketItem) heldItem);
 		else if (heldItem == Items.WATER_BUCKET)
@@ -133,7 +133,7 @@ public class StationarySourceBlocks {
 		else if (heldItem == Items.BUCKET)
 			useEmptyBucket(event, world, player, target, targetType);
 	}
-	
+
 	private void useWaterBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {		
 		boolean soundPlayed = false;
 		if (player.isOnFire()) {
@@ -141,10 +141,10 @@ public class StationarySourceBlocks {
 			world.playSound(player, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			soundPlayed = true;
 		}
-		
+
 		if (!targetType.equals(RayTraceResult.Type.BLOCK))
 			return;
-		
+
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
 		BlockPos pos = blockResult.getBlockPos();
 		BlockState state = world.getBlockState(pos);
@@ -170,14 +170,14 @@ public class StationarySourceBlocks {
 			if (!soundPlayed)
 				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
-		
+
 		// Clear bucket
 		event.setFilledBucket(new ItemStack(Items.BUCKET));
-		
+
 		// Return allow to signal that we've processed it
 		event.setResult(Result.ALLOW);
 	}
-	
+
 	private void hydrateFarmland(World world, BlockPos pos, BlockState state) {
 		for(BlockPos targetPos : BlockPos.betweenClosed(
 				pos.offset(-1, 0, -1),
@@ -191,14 +191,14 @@ public class StationarySourceBlocks {
 			}
 		}
 	}
-	
+
 	private void useFishBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType,
 			FishBucketItem heldItem) {
 		if (!(world instanceof ServerWorld))
 			return;
 		if (!targetType.equals(RayTraceResult.Type.BLOCK))
 			return;
-		
+
 		Field fishBucketType;
 		EntityType<?> type;
 		try {
@@ -209,7 +209,7 @@ public class StationarySourceBlocks {
 			return;
 		}
 		fishBucketType.setAccessible(true);
-		
+
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
 		BlockPos pos = blockResult.getBlockPos();	
 
@@ -218,10 +218,10 @@ public class StationarySourceBlocks {
 			((AbstractFishEntity)entity).setFromBucket(true);
 		}
 		world.playSound(player, pos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-		
+
 		// Finish with a bucket containing only water
 		event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));
-		
+
 		// Return allow to signal that we've processed it
 		event.setResult(Result.ALLOW);
 	}
@@ -259,45 +259,45 @@ public class StationarySourceBlocks {
 		event.setFilledBucket(new ItemStack(Items.BUCKET));
 		event.setResult(Result.ALLOW);
 	}
-	
+
 	private void useEmptyBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {
 		if (!targetType.equals(RayTraceResult.Type.BLOCK)) {
 			// Can be RayTraceResult.Type.ENTITY, e.g. fish, so deny to cause default fish-catching behavior
 			event.setResult(Result.DENY);
 			return;
 		}
-		
+
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
 		BlockPos pos = blockResult.getBlockPos();
 		BlockState state = world.getBlockState(pos);
-		
+
 		if (state.getBlock().equals(Blocks.WATER)) {
 			event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));
 			event.setResult(Result.ALLOW);
-            world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else if (state.getBlock().equals(Blocks.LAVA)) {
 			event.setFilledBucket(new ItemStack(Items.LAVA_BUCKET));
 			event.setResult(Result.ALLOW);
 			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_FILL_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
 	}
-	
+
 	// Copied from class Item, because this is a protected function there
 	private BlockRayTraceResult getPlayerPOVHitResult(World p_219968_0_, PlayerEntity p_219968_1_, RayTraceContext.FluidMode p_219968_2_) {
-	      float f = p_219968_1_.xRot;
-	      float f1 = p_219968_1_.yRot;
-	      Vector3d vector3d = p_219968_1_.getEyePosition(1.0F);
-	      float f2 = MathHelper.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
-	      float f3 = MathHelper.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
-	      float f4 = -MathHelper.cos(-f * ((float)Math.PI / 180F));
-	      float f5 = MathHelper.sin(-f * ((float)Math.PI / 180F));
-	      float f6 = f3 * f4;
-	      float f7 = f2 * f4;
-	      double d0 = p_219968_1_.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue();;
-	      Vector3d vector3d1 = vector3d.add((double)f6 * d0, (double)f5 * d0, (double)f7 * d0);
-	      return p_219968_0_.clip(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.OUTLINE, p_219968_2_, p_219968_1_));
+		float f = p_219968_1_.xRot;
+		float f1 = p_219968_1_.yRot;
+		Vector3d vector3d = p_219968_1_.getEyePosition(1.0F);
+		float f2 = MathHelper.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
+		float f3 = MathHelper.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
+		float f4 = -MathHelper.cos(-f * ((float)Math.PI / 180F));
+		float f5 = MathHelper.sin(-f * ((float)Math.PI / 180F));
+		float f6 = f3 * f4;
+		float f7 = f2 * f4;
+		double d0 = p_219968_1_.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue();;
+		Vector3d vector3d1 = vector3d.add((double)f6 * d0, (double)f5 * d0, (double)f7 * d0);
+		return p_219968_0_.clip(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.OUTLINE, p_219968_2_, p_219968_1_));
 	}
-	
+
 	// Mostly taken from FlintAndSteelItem
 	// Returns true iff it could start fire
 	private boolean setOnFire(FillBucketEvent event, BlockPos pos, World world, PlayerEntity player, BlockState state, BlockRayTraceResult target, ItemStack itemStack) {		
