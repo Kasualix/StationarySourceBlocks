@@ -4,7 +4,7 @@ license="Public domain"
 
 [[mods]]
 modId="stationarysourceblocks"
-version="1.1"
+version="1.1.1"
 displayName="Stationary Source Blocks"
 #updateJSONURL=""
 displayURL="https://www.curseforge.com/minecraft/mc-mods/stationary-source-blocks"

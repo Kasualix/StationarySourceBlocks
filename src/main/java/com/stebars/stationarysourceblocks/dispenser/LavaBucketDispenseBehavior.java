@@ -5,7 +5,6 @@ import net.minecraft.block.DispenserBlock;
 import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.dispenser.IPosition;
 import net.minecraft.dispenser.OptionalDispenseBehavior;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.tags.FluidTags;
@@ -26,7 +25,7 @@ public class LavaBucketDispenseBehavior extends OptionalDispenseBehavior {
 
 		// try to create cobblestone
 		if (world.getFluidState(dispenseBlockPos).is(FluidTags.WATER)) {
-			world.playSound((PlayerEntity)null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(dispenseBlockPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
 
 			bucket.shrink(1);

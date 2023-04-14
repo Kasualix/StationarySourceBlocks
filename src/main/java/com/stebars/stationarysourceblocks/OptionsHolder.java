@@ -1,21 +1,18 @@
 package com.stebars.stationarysourceblocks;
 
-import java.util.List;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.google.common.collect.Lists;
-
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.List;
 
 public class OptionsHolder {
-	public static class Common {	
-
-		public ConfigValue<Boolean> fixIce;
-		public ConfigValue<Boolean> fixDispensers;
-		public ConfigValue<List<? extends String>> dispenserFishBucketItems;
-		public ConfigValue<List<? extends String>> dispenserDefaultItems;
+	public static class Common {
+		public static ConfigValue<Boolean> fixIce;
+		public static ConfigValue<Boolean> fixDispensers;
+		public static ConfigValue<List<? extends String>> dispenserFishBucketItems;
+		public static ConfigValue<List<? extends String>> dispenserDefaultItems;
 
 		public Common(ForgeConfigSpec.Builder builder) {
 			fixIce = builder.comment("If true, replace ice blocks with new ice blocks that don't turn into water in light or when mined.")

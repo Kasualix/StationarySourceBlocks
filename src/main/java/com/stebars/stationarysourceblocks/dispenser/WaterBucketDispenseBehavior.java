@@ -1,10 +1,6 @@
 package com.stebars.stationarysourceblocks.dispenser;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.block.FarmlandBlock;
+import net.minecraft.block.*;
 import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.dispenser.IPosition;
 import net.minecraft.dispenser.OptionalDispenseBehavior;
@@ -30,7 +26,7 @@ public class WaterBucketDispenseBehavior extends OptionalDispenseBehavior {
 
 		// try to create cobblestone
 		if (world.getFluidState(dispenseBlockPos).is(FluidTags.LAVA)) {
-			world.playSound((PlayerEntity)null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, dispenseBlockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(dispenseBlockPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
 
 			bucket.shrink(1);

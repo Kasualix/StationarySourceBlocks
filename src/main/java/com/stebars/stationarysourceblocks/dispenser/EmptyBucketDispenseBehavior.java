@@ -4,7 +4,6 @@ import net.minecraft.block.DispenserBlock;
 import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.dispenser.IPosition;
 import net.minecraft.dispenser.OptionalDispenseBehavior;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.tags.FluidTags;
@@ -28,7 +27,7 @@ public class EmptyBucketDispenseBehavior extends OptionalDispenseBehavior {
 				|| world.getFluidState(source.getPos().below()).is(FluidTags.LAVA)) {
 			bucket.shrink(1);
 			spawnItem(world, new ItemStack(Items.LAVA_BUCKET), 6, direction, dispensePosition);
-			world.playSound((PlayerEntity)null, source.getPos(), SoundEvents.BUCKET_FILL_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, source.getPos(), SoundEvents.BUCKET_FILL_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			return bucket;
 		}
 
@@ -37,7 +36,7 @@ public class EmptyBucketDispenseBehavior extends OptionalDispenseBehavior {
 				|| world.getFluidState(source.getPos().below()).is(FluidTags.WATER)) {
 			bucket.shrink(1);
 			spawnItem(world, new ItemStack(Items.WATER_BUCKET), 6, direction, dispensePosition);
-			world.playSound((PlayerEntity)null, source.getPos(), SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, source.getPos(), SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			return bucket;
 		}
 

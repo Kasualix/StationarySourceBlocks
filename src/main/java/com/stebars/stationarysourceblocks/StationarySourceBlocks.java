@@ -1,21 +1,11 @@
 package com.stebars.stationarysourceblocks;
 
-import java.lang.reflect.Field;
-
 import com.stebars.stationarysourceblocks.dispenser.EmptyBucketDispenseBehavior;
 import com.stebars.stationarysourceblocks.dispenser.FishBucketDispenseBehavior;
 import com.stebars.stationarysourceblocks.dispenser.LavaBucketDispenseBehavior;
 import com.stebars.stationarysourceblocks.dispenser.WaterBucketDispenseBehavior;
-import org.jline.utils.Log;
-
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.block.AbstractFireBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CampfireBlock;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.block.FarmlandBlock;
+import net.minecraft.block.*;
 import net.minecraft.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -32,53 +22,40 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jline.utils.Log;
 
+import java.util.Objects;
 
 @Mod(StationarySourceBlocks.MODID)
+@Mod.EventBusSubscriber()
 public class StationarySourceBlocks {
 	final static String MODID = "stationarysourceblocks";
 
-	private static final DeferredRegister<Block> OVERWRITE_BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "minecraft");
-	public static final RegistryObject<Block> ICE_NO_WATER_BLOCK = OVERWRITE_BLOCKS.register("ice", () -> new IceNoWaterBlock());
-
-	public StationarySourceBlocks() throws Exception {
+	public StationarySourceBlocks() {
 		MinecraftForge.EVENT_BUS.register(this);
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
-
-		if (OptionsHolder.COMMON.fixIce.get())
-			OVERWRITE_BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
-
-		if (OptionsHolder.COMMON.fixDispensers.get()) {
-			registerDispenserBehaviors();
-		}
+		if (OptionsHolder.Common.fixDispensers.get()) registerDispenserBehaviors();
 	}
 
 	public void registerDispenserBehaviors() {
 		DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
 		DispenserBlock.registerBehavior(Items.WATER_BUCKET, new WaterBucketDispenseBehavior());
 		DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new LavaBucketDispenseBehavior());
-
-		for (String name: OptionsHolder.COMMON.dispenserFishBucketItems.get()) {
+		for (String name: OptionsHolder.Common.dispenserFishBucketItems.get()) {
 			Item item;
 			try {
 				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
@@ -86,10 +63,12 @@ public class StationarySourceBlocks {
 				Log.error("Item not found, ignoring: " + name);
 				continue;
 			}
-			DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
+			if (item != null) {
+				DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
+			}
 		}
 
-		for (String name: OptionsHolder.COMMON.dispenserDefaultItems.get()) {
+		for (String name: OptionsHolder.Common.dispenserDefaultItems.get()) {
 			Item item;
 			try {
 				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
@@ -97,41 +76,31 @@ public class StationarySourceBlocks {
 				Log.error("Item not found, ignoring: " + name);
 				continue;
 			}
-			DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
+			if (item != null) {
+				DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
+			}
 		}
 	}
 
 	@SubscribeEvent
-	public void bucketUsed(final FillBucketEvent event)
-	{		
-		// The name `FillBucketEvent` and javadoc seem wrong.
-		// This event is fired when a bucket is filled or emptied.
-		// event.getEmptyBucket() returns the bucket you're holding, full or empty.
-		// event.getFilledBucket() returns null unless you set it.
-		// You set with event.setFilledBucket() to determine resulting item.
-		// event.getResult() is always "default", unless you change it to something else with .setResult().
-		// event's result is whether bucket is allowed to do what this function tries to do.
-		// So setting result to "deny" makes it do whatever it would by default. Setting to "allow" cancels default.
-
+	public void bucketUsed(final FillBucketEvent event) {
 		PlayerEntity player = event.getPlayer();
-		if (player.isCreative())
-			return;
-
+		if (player.isCreative()) return;
 		Item heldItem = event.getEmptyBucket().getItem();
 		World world = event.getWorld();
-
-		// redo raytrace, the one in event.getTarget() doesn't seem to detect ray colliding with fluid source blocks
-		RayTraceResult target = getPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
+		RayTraceResult target = getPlayerPOVHitResult(world, player);
 		RayTraceResult.Type targetType = target.getType();
+		if (heldItem instanceof FishBucketItem) useFishBucket(event, world, player, target, targetType, (FishBucketItem) heldItem);
+		else if (heldItem == Items.WATER_BUCKET) useWaterBucket(event, world, player, target, targetType);
+		else if (heldItem == Items.LAVA_BUCKET) useLavaBucket(event, world, player, target, targetType);
+		else if (heldItem == Items.BUCKET) useEmptyBucket(event, world, target, targetType);
+	}
 
-		if (heldItem instanceof FishBucketItem)
-			useFishBucket(event, world, player, target, targetType, (FishBucketItem) heldItem);
-		else if (heldItem == Items.WATER_BUCKET)
-			useWaterBucket(event, world, player, target, targetType);
-		else if (heldItem == Items.LAVA_BUCKET)
-			useLavaBucket(event, world, player, target, targetType);
-		else if (heldItem == Items.BUCKET)
-			useEmptyBucket(event, world, player, target, targetType);
+	private void hydrateFarmland(World world, BlockPos pos) {
+		for(BlockPos targetPos : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
+			BlockState targetState = world.getBlockState(targetPos);
+			if (targetState.getBlock().equals(Blocks.FARMLAND)) world.setBlock(targetPos, targetState.setValue(FarmlandBlock.MOISTURE, 7), Constants.BlockFlags.DEFAULT_AND_RERENDER);
+		}
 	}
 
 	private void useWaterBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {		
@@ -142,33 +111,21 @@ public class StationarySourceBlocks {
 			soundPlayed = true;
 		}
 
-		if (!targetType.equals(RayTraceResult.Type.BLOCK))
-			return;
+		if (!targetType.equals(RayTraceResult.Type.BLOCK)) return;
 
-		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
-		BlockPos pos = blockResult.getBlockPos();
-		BlockState state = world.getBlockState(pos);
-		Block block = state.getBlock();		
+		BlockPos pos = ((BlockRayTraceResult) target).getBlockPos();
 
 		if (world.getFluidState(pos).is(FluidTags.WATER)) {
-			// poured water onto water -- just empty bucket
-			if (!soundPlayed)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed) world.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else if (world.getFluidState(pos).is(FluidTags.LAVA)) {
-			// poured water onto lava -- create obsidian
-			if (!soundPlayed)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!soundPlayed) world.playSound(null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
-		} else if (block.equals(Blocks.FIRE)) {
-			// poured water onto fire -- extinguish the fire
-			if (!soundPlayed)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+		} else if (world.getBlockState(pos).getBlock().equals(Blocks.FIRE)) {
+			if (!soundPlayed) world.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 		} else {
-			// tried to pour water on a block, not lava, so empty and possibly hydrate nearby farmland
-			hydrateFarmland(world, pos, state);
-			if (!soundPlayed)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			hydrateFarmland(world, pos);
+			if (!soundPlayed) world.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
 
 		// Clear bucket
@@ -178,46 +135,17 @@ public class StationarySourceBlocks {
 		event.setResult(Result.ALLOW);
 	}
 
-	private void hydrateFarmland(World world, BlockPos pos, BlockState state) {
-		for(BlockPos targetPos : BlockPos.betweenClosed(
-				pos.offset(-1, 0, -1),
-				pos.offset(1, 0, 1))) {
-			BlockState targetState = world.getBlockState(targetPos);
-			Block targetBlock = targetState.getBlock();
-			if (targetBlock.equals(Blocks.FARMLAND)) {
-				world.setBlock(targetPos,
-						targetState.setValue(FarmlandBlock.MOISTURE, 7),
-						Constants.BlockFlags.DEFAULT_AND_RERENDER);
-			}
-		}
-	}
-
-	private void useFishBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType,
-			FishBucketItem heldItem) {
-		if (!(world instanceof ServerWorld))
-			return;
-		if (!targetType.equals(RayTraceResult.Type.BLOCK))
-			return;
-
-		Field fishBucketType;
-		EntityType<?> type;
-		try {
-			fishBucketType = FishBucketItem.class.getDeclaredField("type");
-			type = (EntityType<?>) fishBucketType.get(heldItem);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-		fishBucketType.setAccessible(true);
-
+	private void useFishBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType, FishBucketItem heldItem) {
+		if (!(world instanceof ServerWorld) || !targetType.equals(RayTraceResult.Type.BLOCK)) return;
+		EntityType<?> type = heldItem.type;
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
-		BlockPos pos = blockResult.getBlockPos();	
-
-		Entity entity = type.spawn((ServerWorld) world, event.getEmptyBucket(), (PlayerEntity)null, pos, SpawnReason.BUCKET, true, false);
+		BlockPos pos = blockResult.getBlockPos();
+		Entity entity = type.spawn((ServerWorld) world, event.getEmptyBucket(), null, pos, SpawnReason.BUCKET, true, false);
 		if (entity != null) {
 			((AbstractFishEntity)entity).setFromBucket(true);
 		}
 		world.playSound(player, pos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+
 
 		// Finish with a bucket containing only water
 		event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));
@@ -227,32 +155,28 @@ public class StationarySourceBlocks {
 	}
 
 	private void useLavaBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {
-		if (!targetType.equals(RayTraceResult.Type.BLOCK))
-			return;
+		if (!targetType.equals(RayTraceResult.Type.BLOCK)) return;
 
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
 		BlockPos pos = blockResult.getBlockPos();
 		BlockState state = world.getBlockState(pos);
-		Block block = state.getBlock();
 
 		if (world.getFluidState(pos).is(FluidTags.WATER)) {
 			// poured lava onto water -- create cobblestone
-			world.playSound((PlayerEntity)null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			world.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), 3);
 		} else if (world.getFluidState(pos).is(FluidTags.LAVA)) {
 			// poured lava onto lava -- ignore
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
-		} else if (block.equals(Blocks.CAULDRON)) {
+			world.playSound(null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
+		} else if (state.getBlock().equals(Blocks.CAULDRON)) {
 			// CauldronBlock doesn't have a clause for lava buckets, only water buckets and empty buckets - ???
 			// for now, just make it empty
-			//CauldronBlock cauldronBlock = (CauldronBlock) block;
-			//cauldronBlock.use(state, world, pos, player, Hand.MAIN_HAND, blockResult);
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else {
 			// poured lava onto some other block -- try to start a fire
-			boolean couldSetOnFire = setOnFire(event, pos, world, player, state, blockResult, event.getEmptyBucket());
+			boolean couldSetOnFire = setOnFire(pos, world, player, state, blockResult, event.getEmptyBucket());
 			if (!couldSetOnFire)
-				world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
+				world.playSound(null, pos, SoundEvents.BUCKET_EMPTY_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
 
 		// Clear bucket, return allow to signal we processed the event
@@ -260,60 +184,51 @@ public class StationarySourceBlocks {
 		event.setResult(Result.ALLOW);
 	}
 
-	private void useEmptyBucket(FillBucketEvent event, World world, PlayerEntity player, RayTraceResult target, RayTraceResult.Type targetType) {
+	private void useEmptyBucket(FillBucketEvent event, World world, RayTraceResult target, RayTraceResult.Type targetType) {
 		if (!targetType.equals(RayTraceResult.Type.BLOCK)) {
 			// Can be RayTraceResult.Type.ENTITY, e.g. fish, so deny to cause default fish-catching behavior
 			event.setResult(Result.DENY);
 			return;
 		}
 
-		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
-		BlockPos pos = blockResult.getBlockPos();
+		BlockPos pos = ((BlockRayTraceResult) target).getBlockPos();
 		BlockState state = world.getBlockState(pos);
 
 		if (state.getBlock().equals(Blocks.WATER)) {
 			event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));
 			event.setResult(Result.ALLOW);
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, pos, SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else if (state.getBlock().equals(Blocks.LAVA)) {
 			event.setFilledBucket(new ItemStack(Items.LAVA_BUCKET));
 			event.setResult(Result.ALLOW);
-			world.playSound((PlayerEntity)null, pos, SoundEvents.BUCKET_FILL_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, pos, SoundEvents.BUCKET_FILL_LAVA, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		}
 	}
 
 	// Copied from class Item, because this is a protected function there
-	private BlockRayTraceResult getPlayerPOVHitResult(World p_219968_0_, PlayerEntity p_219968_1_, RayTraceContext.FluidMode p_219968_2_) {
-		float f = p_219968_1_.xRot;
-		float f1 = p_219968_1_.yRot;
-		Vector3d vector3d = p_219968_1_.getEyePosition(1.0F);
-		float f2 = MathHelper.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
-		float f3 = MathHelper.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
+	private BlockRayTraceResult getPlayerPOVHitResult(World world, PlayerEntity player) {
+		float f = player.xRot;
+		float f1 = player.yRot;
+		Vector3d vector3d = player.getEyePosition(1.0F);
 		float f4 = -MathHelper.cos(-f * ((float)Math.PI / 180F));
-		float f5 = MathHelper.sin(-f * ((float)Math.PI / 180F));
-		float f6 = f3 * f4;
-		float f7 = f2 * f4;
-		double d0 = p_219968_1_.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue();;
-		Vector3d vector3d1 = vector3d.add((double)f6 * d0, (double)f5 * d0, (double)f7 * d0);
-		return p_219968_0_.clip(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.OUTLINE, p_219968_2_, p_219968_1_));
+		double d0 = Objects.requireNonNull(player.getAttribute(ForgeMod.REACH_DISTANCE.get())).getValue();
+		Vector3d vector3d1 = vector3d.add((double)((MathHelper.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI)) * f4) * d0, (double)(MathHelper.sin(-f * ((float)Math.PI / 180F))) * d0, (double)((MathHelper.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI)) * f4) * d0);
+		return world.clip(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.SOURCE_ONLY, player));
 	}
 
 	// Mostly taken from FlintAndSteelItem
 	// Returns true iff it could start fire
-	private boolean setOnFire(FillBucketEvent event, BlockPos pos, World world, PlayerEntity player, BlockState state, BlockRayTraceResult target, ItemStack itemStack) {		
+	private boolean setOnFire(BlockPos pos, World world, PlayerEntity player, BlockState state, BlockRayTraceResult target, ItemStack itemStack) {
 		if (CampfireBlock.canLight(state)) {
 			world.playSound(player, pos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
-			world.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.valueOf(true)), 11);
+			world.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.TRUE), 11);
 			return true;
 		} else {
-			BlockPos blockpos1 = pos.relative(target.getDirection());
-			if (AbstractFireBlock.canBePlacedAt(world, blockpos1, player.getDirection())) {
-				world.playSound(player, blockpos1, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
-				BlockState blockstate1 = AbstractFireBlock.getState(world, blockpos1);
-				world.setBlock(blockpos1, blockstate1, 11);
-				if (player instanceof ServerPlayerEntity) {
-					CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity)player, blockpos1, itemStack);
-				}
+			BlockPos blockPos = pos.relative(target.getDirection());
+			if (AbstractFireBlock.canBePlacedAt(world, blockPos, player.getDirection())) {
+				world.playSound(player, blockPos, SoundEvents.LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0F, 1.0F);
+				world.setBlock(blockPos, AbstractFireBlock.getState(world, blockPos), 11);
+				if (player instanceof ServerPlayerEntity) CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity)player, blockPos, itemStack);
 				return true;
 			} else {
 				return false;
