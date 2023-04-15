@@ -141,11 +141,8 @@ public class StationarySourceBlocks {
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) target;
 		BlockPos pos = blockResult.getBlockPos();
 		Entity entity = type.spawn((ServerWorld) world, event.getEmptyBucket(), null, pos, SpawnReason.BUCKET, true, false);
-		if (entity != null) {
-			((AbstractFishEntity)entity).setFromBucket(true);
-		}
+		if (entity != null) ((AbstractFishEntity)entity).setFromBucket(true);
 		world.playSound(player, pos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-
 
 		// Finish with a bucket containing only water
 		event.setFilledBucket(new ItemStack(Items.WATER_BUCKET));

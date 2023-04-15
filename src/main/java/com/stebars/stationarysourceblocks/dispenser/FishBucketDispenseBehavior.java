@@ -15,7 +15,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
 import java.lang.reflect.Field;
@@ -26,7 +25,7 @@ public class FishBucketDispenseBehavior extends OptionalDispenseBehavior {
 
 		Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
 		BlockPos targetPos = source.getPos().relative(direction);
-		World world = source.getLevel();
+		ServerWorld world = source.getLevel();
 		IPosition dispensePosition = DispenserBlock.getDispensePosition(source);
 
 		Field fishBucketType;
@@ -41,10 +40,9 @@ public class FishBucketDispenseBehavior extends OptionalDispenseBehavior {
 		}
 
 		// spawn fish
-		Entity entity = type.spawn((ServerWorld) world, bucket, null, targetPos, SpawnReason.BUCKET, true, false);
-		if (entity != null) {
-			((AbstractFishEntity)entity).setFromBucket(true);
-		}
+		Entity entity = type.spawn(world, bucket, null, targetPos, SpawnReason.BUCKET, true, false);
+		if (entity != null) ((AbstractFishEntity)entity).setFromBucket(true);
+
 		world.playSound(null, targetPos, SoundEvents.BUCKET_EMPTY_FISH, SoundCategory.NEUTRAL, 1.0F, 1.0F);
 
 		// throw out water bucket, return the rest of the buckets
