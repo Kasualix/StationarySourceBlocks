@@ -36,7 +36,6 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jline.utils.Log;
 
 import java.util.Objects;
 
@@ -47,38 +46,22 @@ public class StationarySourceBlocks {
 
 	public StationarySourceBlocks() {
 		MinecraftForge.EVENT_BUS.register(this);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.COMMON_SPEC);
-		if (OptionsHolder.Common.fixDispensers.get()) registerDispenserBehaviors();
+		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, OptionsHolder.config);
+		if (OptionsHolder.fixDispensers.get()) registerDispenserBehaviors();
 	}
 
 	public void registerDispenserBehaviors() {
 		DispenserBlock.registerBehavior(Items.BUCKET, new EmptyBucketDispenseBehavior());
 		DispenserBlock.registerBehavior(Items.WATER_BUCKET, new WaterBucketDispenseBehavior());
 		DispenserBlock.registerBehavior(Items.LAVA_BUCKET, new LavaBucketDispenseBehavior());
-		for (String name: OptionsHolder.Common.dispenserFishBucketItems.get()) {
-			Item item;
-			try {
-				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
-			} catch (Exception e) {
-				Log.error("Item not found, ignoring: " + name);
-				continue;
-			}
-			if (item != null) {
-				DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
-			}
+		for (String name: OptionsHolder.dispenserFishBucketItems.get()) {
+			Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+			if (item != null) DispenserBlock.registerBehavior(item, new FishBucketDispenseBehavior());
 		}
 
-		for (String name: OptionsHolder.Common.dispenserDefaultItems.get()) {
-			Item item;
-			try {
-				item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
-			} catch (Exception e) {
-				Log.error("Item not found, ignoring: " + name);
-				continue;
-			}
-			if (item != null) {
-				DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
-			}
+		for (String name: OptionsHolder.dispenserDefaultItems.get()) {
+			Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(name));
+			if (item != null) DispenserBlock.registerBehavior(item, new DefaultDispenseItemBehavior());
 		}
 	}
 
@@ -112,9 +95,7 @@ public class StationarySourceBlocks {
 		}
 
 		if (!targetType.equals(RayTraceResult.Type.BLOCK)) return;
-
 		BlockPos pos = ((BlockRayTraceResult) target).getBlockPos();
-
 		if (world.getFluidState(pos).is(FluidTags.WATER)) {
 			if (!soundPlayed) world.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 		} else if (world.getFluidState(pos).is(FluidTags.LAVA)) {

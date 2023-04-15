@@ -4,7 +4,6 @@ import net.minecraft.block.*;
 import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.dispenser.IPosition;
 import net.minecraft.dispenser.OptionalDispenseBehavior;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.tags.FluidTags;
@@ -46,14 +45,12 @@ public class WaterBucketDispenseBehavior extends OptionalDispenseBehavior {
 			Block targetBlock = targetState.getBlock();
 			if (targetBlock.equals(Blocks.FARMLAND)) {
 				anyBlocksHydrated = true;
-				world.setBlock(targetPos,
-						targetState.setValue(FarmlandBlock.MOISTURE, 7),
-						Constants.BlockFlags.DEFAULT_AND_RERENDER);
+				world.setBlock(targetPos, targetState.setValue(FarmlandBlock.MOISTURE, 7), Constants.BlockFlags.DEFAULT_AND_RERENDER);
 			}
 		}
 		// if we could hydrate blocks, toss out the empty bucket
 		if (anyBlocksHydrated) {
-			world.playSound((PlayerEntity)null, hydrateCenter, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			world.playSound(null, hydrateCenter, SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			return new ItemStack(Items.BUCKET);
 		}
 

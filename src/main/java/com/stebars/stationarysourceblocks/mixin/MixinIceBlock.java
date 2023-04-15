@@ -25,7 +25,7 @@ public class MixinIceBlock extends BreakableBlock {
 
     @Inject(method = "playerDestroy", at = @At("HEAD"), cancellable = true)
     private void onPlayerDestroy(World world, PlayerEntity player, BlockPos pos, BlockState state, TileEntity entity, ItemStack stack, CallbackInfo ci) {
-        if (!OptionsHolder.Common.fixIce.get()) return;
+        if (!OptionsHolder.fixIce.get()) return;
         player.awardStat(Stats.BLOCK_MINED.get((IceBlock)((Object)this)));
         player.causeFoodExhaustion(0.005F);
         dropResources(state, world, pos, entity, player, stack);
@@ -34,7 +34,7 @@ public class MixinIceBlock extends BreakableBlock {
     }
     @Inject(method = "melt", at = @At("HEAD"), cancellable = true)
     private void onMelt(BlockState state, World world, BlockPos pos, CallbackInfo ci) {
-        if (!OptionsHolder.Common.fixIce.get()) return;
+        if (!OptionsHolder.fixIce.get()) return;
         world.removeBlock(pos, false);
         ci.cancel();
     }
